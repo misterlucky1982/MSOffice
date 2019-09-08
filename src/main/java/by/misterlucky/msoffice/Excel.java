@@ -29,13 +29,13 @@ public class Excel {
 		try {
 			fis = new FileInputStream(file);
 		} catch (FileNotFoundException e1) {
-			return false;
+			throw new ExcelException();
 		}
 		HSSFWorkbook myWorkBook = null;
 		try {
 			myWorkBook = new HSSFWorkbook(fis);
 		} catch (IOException e1) {
-			return false;
+			throw new ExcelException();
 		}
 		HSSFSheet mySheet = myWorkBook.getSheetAt(0);
 		Map<Integer, Object[]> data = new HashMap<Integer, Object[]>();
@@ -64,12 +64,63 @@ public class Excel {
 		try {
 			os = new FileOutputStream(file);
 		} catch (FileNotFoundException e) {
-			return false;
+			throw new ExcelException();
 		}
 		try {
 			myWorkBook.write(os);
 		} catch (IOException e) {
+			throw new ExcelException();
+		}
+		return true;
+}
+	
+	public static boolean write(File destination, String[][] lines) throws ExcelException{
+		if(destination==null||!destination.exists())throw new ExcelException("invalid destination file");
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(destination);
+		} catch (FileNotFoundException e1) {
 			return false;
+		}
+		HSSFWorkbook myWorkBook = null;
+		try {
+			myWorkBook = new HSSFWorkbook(fis);
+		} catch (IOException e1) {
+			throw new ExcelException();
+		}
+		HSSFSheet mySheet = myWorkBook.getSheetAt(0);
+		Map<Integer, Object[]> data = new HashMap<Integer, Object[]>();
+		for (int index = 0; index < lines.length; index++) {
+			data.put(index, lines[index]);
+		}
+		int rownum = mySheet.getLastRowNum();
+		for (int key = 0; key < lines.length; key++) {
+			Row row = mySheet.createRow(rownum++);
+			Object[] objArr = data.get(key);
+			int cellnum = 0;
+			for (Object obj : objArr) {
+				Cell cell = row.createCell(cellnum++);
+				if (obj instanceof String) {
+					cell.setCellValue((String) obj);
+				} else if (obj instanceof Boolean) {
+					cell.setCellValue((Boolean) obj);
+				} else if (obj instanceof Date) {
+					cell.setCellValue((Date) obj);
+				} else if (obj instanceof Double) {
+					cell.setCellValue((Double) obj);
+				}
+			}
+		}
+		FileOutputStream os = null;
+		try {
+			os = new FileOutputStream(destination);
+		} catch (FileNotFoundException e) {
+			throw new ExcelException();
+		}
+		try {
+			myWorkBook.write(os);
+		} catch (IOException e) {
+			throw new ExcelException();
 		}
 		return true;
 }
